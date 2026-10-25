@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rod and square air-core magnetorquer calculator: electrical power, copper and core mass, wire diameter, current and turns.">
+  <meta name="color-scheme" content="light">
+  <title>Magnetorquer calculator</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./page.css">
+  <script defer src="./calculator.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="view-tabs" id="tabList" role="tablist" aria-label="Magnetorquer type">
+      <button id="tab-rod" class="view-tab" role="tab" type="button" data-tab="rod" aria-controls="calculatorView" aria-selected="true">Rod coil</button>
+      <button id="tab-air" class="view-tab" role="tab" type="button" data-tab="air" aria-controls="calculatorView" aria-selected="false" tabindex="-1">Air coil</button>
+    </div>
+    <main id="calculatorView" class="app-layout" role="tabpanel" aria-labelledby="tab-rod">
+      <aside class="control-panel" aria-label="Calculator inputs">
+        <div id="inputSections"></div>
+        <button id="resetButton" class="secondary-button" type="button">Reset defaults</button>
+      </aside>
+      <section class="workspace" aria-label="Magnetorquer results">
+        <div class="result-toolbar" aria-live="polite" aria-atomic="true">
+          <div><span class="status-dot" id="resultStatusDot"></span><strong id="resultStatus">Calculating</strong></div>
+          <div class="toolbar-facts"><span>Continuous winding model</span><span id="modelFact">Core + copper</span></div>
+        </div>
+        <section class="metric-grid" aria-label="Design summary">
+          <article class="metric-card primary-metric"><span class="metric-label">Electrical power</span><strong id="metricPower">—</strong><small>At target dipole moment</small></article>
+          <article class="metric-card"><span class="metric-label">Material mass</span><strong id="metricMass">—</strong><small id="massNote">Copper + core</small></article>
+          <article class="metric-card"><span class="metric-label">Current</span><strong id="metricCurrent">—</strong><small>At entered voltage</small></article>
+          <article class="metric-card"><span class="metric-label">Bare wire diameter</span><strong id="metricDiameter">—</strong><small>Ideal calculated size</small></article>
+        </section>
+        <div id="warningPanel" class="warning-panel coil-warning" role="status" hidden></div>
+        <section class="visual-card">
+          <div class="card-heading"><div><h1 class="model-heading" id="designTitle">Rod magnetorquer</h1><p id="designDescription">Cylindrical magnetic core with a copper winding.</p></div><div class="selected-dimensions" id="selectedDimensions">—</div></div>
+          <div class="visual-grid coil-visuals">
+            <figure class="diagram"><figcaption><strong>Coil geometry</strong><span id="geometryCaption">Axial section; schematic, not to scale</span></figcaption><svg id="geometrySvg" viewBox="0 0 560 330" role="img" aria-label="Coil geometry with input dimensions"></svg></figure>
+            <figure class="diagram"><figcaption><strong>Power and copper mass</strong><span>Fixed target; outer winding dimensions varied</span></figcaption><svg id="tradeoffSvg" viewBox="0 0 560 330" role="img" aria-label="Power versus copper mass with current design highlighted"></svg></figure>
+          </div>
+        </section>
+        <section class="table-card">
+          <div class="card-heading"><div><h2>Winding and mass</h2><p>Continuous-turn estimates. Mass excludes insulation, bobbin, mounts and electronics.</p></div></div>
+          <div class="table-wrap"><table class="coil-table"><thead><tr><th scope="col">Parameter</th><th scope="col">Value</th><th scope="col">Unit</th></tr></thead><tbody id="detailBody"></tbody></table></div>
+        </section>
+        <section class="table-card">
+          <div class="card-heading"><div><h2>Voltage options</h2><p>Each row resizes the ideal wire for the same target moment and copper volume.</p></div></div>
+          <div class="table-wrap"><table class="coil-table"><thead><tr><th scope="col">Voltage (V)</th><th scope="col">Wire (mm)</th><th scope="col">Turns</th><th scope="col">Current (mA)</th><th scope="col">Resistance (Ω)</th></tr></thead><tbody id="voltageBody"></tbody></table></div>
+          <p class="model-note">Power and material mass stay constant when only the sizing voltage changes. This does not describe changing the voltage on an already manufactured coil.</p>
+        </section>
+        <details class="method-card">
+          <summary>Calculation method and limitations</summary>
+          <div class="method-content">
+            <div><h3>Geometry and mass</h3><p id="geometryMethod"></p><p>V is the volume of copper only. The fill factor k converts the winding envelope to copper volume. M = ρ<sub>Cu</sub>V + ρ<sub>core</sub>V<sub>core</sub>; the second term is zero for the air coil.</p><p>All dimensions are converted to metres internally. Mass is displayed in grams. Resistivity is in Ω·m and density in kg/m³.</p></div>
+            <div><h3>Electrical model</h3><p id="electricalMethod"></p><p class="formula">P = ρ m² ℓ² / (V S² K²)</p><p class="formula">a = ρ m ℓ / (S K U)<br>d = 2√(a / π)<br>N = V / (ℓ a)<br>R = ρ N ℓ / a; I = U / R</p><p>m: target dipole moment (A·m²), ℓ: mean turn length (m), S: magnetic area (m²), a: bare conductor area (m²), ρ: electrical resistivity (Ω·m), U: voltage (V), K: core gain.</p></div>
+            <div><h3>Scope and references</h3><p id="limitationsMethod"></p><p>Wire size and turn count are continuous estimates, not a winding specification. Choose an available insulated wire, an integer turn count and verify the finished coil separately. No temperature rise, driver loss, inductive transient, end-turn correction or thermal limit is calculated.</p><p><a href="./references/magnetorquer_navrh-2.pdf">Square air-coil derivation (PDF)</a><br><a href="./references/core_magnetorquer_navrh.pdf">Rod-coil derivation (PDF)</a><br><a href="./references/rod_magnetorquer_sweep.py">Supplied rod sweep (Python)</a></p></div>
+          </div>
+        </details>
+        <footer class="source-footer"><span>Magnetorquer calculator · based on the supplied design references</span><a href="./README.md">Model and deployment notes</a></footer>
+      </section>
+    </main>
+  </div>
+  <noscript>Enable JavaScript to calculate power and mass. This page runs entirely in your browser.</noscript>
+</body>
+</html>

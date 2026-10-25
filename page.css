@@ -1,0 +1,28 @@
+/* The source Chamber optimizer styles.css is retained verbatim.
+   Only page-specific layout, drawings and removal of the 64 px header offset follow. */
+.control-panel { top: 0; height: 100vh; }
+.coil-visuals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.coil-table { min-width: 540px; }
+.coil-table th:first-child, .coil-table td:first-child { text-align: left; }
+.coil-table tbody tr { cursor: default; }
+.coil-table caption { padding: 0 0 12px; text-align: left; color: var(--muted); }
+.input-with-unit > span { text-transform: none; }
+.field-grid { align-items: start; }
+.input-with-unit:has(input[aria-invalid="true"]) { border-color: var(--red); }
+.coil-warning { display: block; }
+.coil-warning p { margin: 0; color: var(--text); font-size: .74rem; line-height: 1.55; }
+.coil-warning p + p { margin-top: 6px; }
+.diagram .coil-copper { fill: var(--teal-soft); stroke: var(--teal); stroke-width: 2; }
+.diagram .coil-core { fill: var(--diagram-centre); stroke: var(--diagram-board); stroke-width: 2; }
+.diagram .coil-wire { fill: none; stroke: var(--teal); stroke-width: 2; }
+.diagram .coil-axis { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.diagram .coil-guide { fill: none; stroke: var(--diagram-guide); stroke-width: 1; stroke-dasharray: 4 4; }
+.diagram .coil-plot { fill: none; stroke: var(--teal); stroke-width: 2.5; }
+.diagram .coil-point { fill: var(--teal); stroke: var(--panel); stroke-width: 2; }
+.diagram text { fill: var(--text); font: 12px Inter, "Segoe UI", sans-serif; }
+.diagram .muted { fill: var(--muted); font-size: 11px; }
+.method-content a { color: var(--teal-dim); }
+.diagram svg { aspect-ratio: 560 / 330; }
+.model-heading { margin: 0; font-size: 1.04rem; font-weight: 680; letter-spacing: -.02em; }
+@media (max-width: 980px) { .control-panel { height: auto; } }
+@media (max-width: 680px) { .coil-visuals { grid-template-columns: 1fr; } }
