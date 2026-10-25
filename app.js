@@ -76,6 +76,55 @@
     cancelAnimationFrame(frame); frame = requestAnimationFrame(update);
   });
   $('resetButton').addEventListener('click', () => { states[kind] = {...defaults[kind]}; renderInputs(); });
+  // Native MathML builders for the design-equation table (no external renderer).
+  const mi = s => `<mi>${s}</mi>`, mn = s => `<mn>${s}</mn>`, mo = s => `<mo>${s}</mo>`;
+  const mrow = (...x) => `<mrow>${x.join('')}</mrow>`;
+  const frac = (a, b) => `<mfrac>${mrow(a)}${mrow(b)}</mfrac>`;
+  const sup = (b, e) => `<msup>${b}${e}</msup>`, sub = (b, s) => `<msub>${b}${s}</msub>`;
+  const subt = (b, s) => sub(mi(b), `<mtext>${s}</mtext>`);
+  const sqrt = (...x) => `<msqrt>${x.join('')}</msqrt>`;
+  const paren = (...x) => mo('(') + x.join('') + mo(')');
+  const eq = (lhs, ...rhs) => `<math displaystyle="true">${mrow(lhs, mo('='), ...rhs)}</math>`;
+  const sym = {S: mi('S'), V: mi('V'), l: mi('ℓ'), K: mi('K'), m: mi('m'), U: mi('U'), a: mi('a'), N: mi('N'), R: mi('R'), I: mi('I'), P: mi('P'),
+    rho: mi('ρ'), pi: mi('π'), r: mi('r'), L: mi('L'), k: mi('k'), ro: sub(mi('r'), mi('o')), Lw: sub(mi('L'), mi('w')), Nd: sub(mi('N'), mi('d')),
+    mur: sub(mi('μ'), mi('r')), Vcore: subt('V', 'core'), lwire: subt('l', 'wire'), Lr: mrow(mi('L'), mo('/'), mi('r'))};
+  function equations(r) {
+    const s = sym, ln = (...x) => mi('ln') + mo('&#x2061;') + paren(...x);
+    const geometry = kind === 'rod' ? [
+      ['Magnetic area', eq(s.S, s.pi, sup(s.r, mn(2))), r.area * 1e6, 'mm²'],
+      ['Core volume', eq(s.Vcore, s.S, s.L), r.coreVolume * 1e6, 'cm³'],
+      ['Mean turn length', eq(s.l, mn(2), s.pi, frac(mrow(s.ro, mo('+'), s.r), mn(2))), r.turnLength * 1000, 'mm'],
+      ['Copper volume', eq(s.V, s.pi, paren(sup(s.ro, mn(2)), mo('−'), sup(s.r, mn(2))), s.Lw, s.k), r.volume * 1e6, 'cm³'],
+      ['Demagnetization factor', eq(s.Nd, frac(mn(4) + mo('[') + ln(s.Lr) + mo('−') + mn(1) + mo(']'), sup(paren(s.Lr), mn(2)) + mo('−') + mn(4) + ln(s.Lr))), r.nd, '—'],
+      ['Core gain', eq(s.K, mn(1), mo('+'), frac(mrow(s.mur, mo('−'), mn(1)), mrow(mn(1), mo('+'), paren(s.mur, mo('−'), mn(1)), s.Nd))), r.gain, '—'],
+      ['Saturation moment', eq(subt('m', 'sat'), frac(subt('B', 'sat') + s.Vcore, sub(mi('μ'), mn(0)))), r.saturationMoment, 'A·m²']
+    ] : [
+      ['Magnetic area', eq(s.S, sup(mi('s'), mn(2))), r.area * 1e6, 'mm²'],
+      ['Mean turn length', eq(s.l, mn(4), mi('s')), r.turnLength * 1000, 'mm'],
+      ['Copper volume', eq(s.V, mn(4), mi('s'), mi('w'), mi('t'), s.k), r.volume * 1e6, 'cm³'],
+      ['Core gain', eq(s.K, mn(1)), r.gain, '—']
+    ];
+    const power = kind === 'rod'
+      ? eq(s.P, frac(s.rho + sup(s.m, mn(2)) + sup(s.l, mn(2)), s.V + sup(s.S, mn(2)) + sup(s.K, mn(2))))
+      : eq(s.P, frac(s.rho + sup(s.m, mn(2)) + sup(s.l, mn(2)), s.V + sup(s.S, mn(2)) + sup(s.K, mn(2))), mo('='), frac(mn(16) + s.rho + sup(s.m, mn(2)), s.V + s.S));
+    const electrical = [
+      ['Electrical power', power, r.power * 1000, 'mW'],
+      ['Bare conductor area', eq(s.a, frac(s.rho + s.m + s.l, s.S + s.K + s.U)), r.wireArea * 1e6, 'mm²'],
+      ['Bare wire diameter', eq(mi('d'), mn(2), sqrt(frac(s.a, s.pi))), r.diameter * 1000, 'mm'],
+      ['Turn count', eq(s.N, frac(s.V, s.l + s.a)), r.turns, '—'],
+      ['Wire length', eq(s.lwire, s.N, s.l), r.wireLength, 'm'],
+      ['Resistance', eq(s.R, frac(s.rho + s.lwire, s.a)), r.resistance, 'Ω'],
+      ['Current', eq(s.I, frac(s.U, s.R)), r.current * 1000, 'mA']
+    ].map(row => [...row, true]);
+    const mass = [['Material mass', eq(mi('M'), sub(s.rho, '<mtext>Cu</mtext>'), s.V, ...(kind === 'rod' ? [mo('+'), sub(s.rho, '<mtext>core</mtext>'), s.Vcore] : [])), r.mass * 1000, 'g']];
+    return [...geometry, ...electrical, ...mass];
+  }
+  function renderEquations(r, supported) {
+    $('equationBody').innerHTML = equations(r.valid ? r : {}).map(([name, math, number, unit, electrical]) => {
+      const shown = r.valid && (!electrical || supported) && Number.isFinite(number) ? fmt(number, 4) : '—';
+      return `<tr><td>${name}</td><td class="equation-cell">${math}</td><td>${shown}</td><td>${unit}</td></tr>`;
+    }).join('');
+  }
   function update() {
     const p = states[kind], r = calculate(kind, p), supported = r.valid && !r.saturated;
     $('metricPower').textContent = supported ? val(r.power * 1000, 'mW', 2) : '—';
@@ -88,6 +137,7 @@
     $('warningPanel').hidden = !warnings.length;
     $('warningPanel').classList.toggle('is-error', !r.valid || r.saturated);
     $('warningPanel').replaceChildren(...warnings.map(message => { const para = document.createElement('p'); para.textContent = message; return para; }));
+    renderEquations(r, supported);
     if (!r.valid) {
       $('selectedDimensions').textContent = '—'; $('detailBody').innerHTML = '<tr><td colspan="3">Enter a valid set of parameters.</td></tr>';
       $('voltageBody').innerHTML = '<tr><td colspan="5">—</td></tr>';

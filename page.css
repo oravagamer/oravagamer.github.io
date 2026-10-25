@@ -26,3 +26,7 @@
 .model-heading { margin: 0; font-size: 1.04rem; font-weight: 680; letter-spacing: -.02em; }
 @media (max-width: 980px) { .control-panel { height: auto; } }
 @media (max-width: 680px) { .coil-visuals { grid-template-columns: 1fr; } }
+.equation-table { min-width: 680px; }
+.equation-table td { vertical-align: middle; }
+.equation-table th:nth-child(2), .equation-cell { text-align: left !important; white-space: nowrap; }
+.equation-cell math { font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", math; font-size: 1.12rem; color: var(--text); }
